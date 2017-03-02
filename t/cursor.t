@@ -10,7 +10,7 @@ plan tests => repeat_each() * (3 * blocks());
 my $pwd = cwd();
 
 our $HttpConfig = qq{
-    lua_package_path "$pwd/lib/?/init.lua;;";
+    lua_package_path "$pwd/lib/?.lua;$pwd/lib/?/init.lua;;";
 };
 
 $ENV{TEST_NGINX_RESOLVER} = '8.8.8.8';
@@ -31,7 +31,7 @@ __DATA__
         content_by_lua '
             local mongo = require "resty.mongol"
             conn = mongo:new()
-            conn:set_timeout(10000) 
+            conn:set_timeout(10000)
             local ok, err = conn:connect("127.0.0.1")
 
             if not ok then
@@ -49,7 +49,7 @@ __DATA__
             local i, j
             local t = {}
             for i = 1,10 do
-                j = 100 - i
+                j = 11 - i
                 table.insert(t, {name="dog",n=i,m=j})
             end
             r, err = col:insert(t, nil, true)
@@ -61,17 +61,18 @@ __DATA__
                 ngx.say(v["n"])
             end
 
-            r = col:find({name="dog"}, nil, 0)
+            r = col:find({name="dog"}, nil, nil, 10)
             r:limit(3)
             for i , v in r:pairs() do
                 ngx.say(v["n"])
             end
 
-            r = col:find({name="dog"}, nil, 2)
-            r:limit(5)
+            r = col:find({name="dog"}, nil, 2, 10)
+            r:limit(3)
             for i , v in r:pairs() do
                 ngx.say(v["n"])
             end
+
             conn:close()
         ';
     }
@@ -86,6 +87,7 @@ GET /t
 3
 1
 2
+3
 --- no_error_log
 [error]
 
@@ -96,7 +98,7 @@ GET /t
         content_by_lua '
             local mongo = require "resty.mongol"
             conn = mongo:new()
-            conn:set_timeout(10000) 
+            conn:set_timeout(10000)
             local ok, err = conn:connect("127.0.0.1")
 
             if not ok then
@@ -114,7 +116,7 @@ GET /t
             local i, j
             local t = {}
             for i = 1,10 do
-                j = 10 - i
+                j = 11 - i
                 table.insert(t, {name="dog",n=i,m=j})
             end
             r, err = col:insert(t, nil, true)
@@ -122,35 +124,68 @@ GET /t
 
             r = col:find({name="dog"}, nil, 5)
             local ret,err = r:sort({n=-1})
-            if not ret then ngx.say("sort failed: "..err) 
-                ngx.exit(ngx.HTTP_OK) end
+            if not ret then
+                ngx.say("sort failed: "..err)
+                ngx.exit(ngx.HTTP_OK)
+            end
             for i , v in pairs(ret) do
                 ngx.say(v["n"])
             end
 
             r = col:find({name="dog"}, nil, 5)
             ret,err = r:sort({n=1})
-            if not ret then ngx.say("sort failed: "..err) 
-                ngx.exit(ngx.HTTP_OK) end
+            if not ret then
+                ngx.say("sort failed: "..err)
+                ngx.exit(ngx.HTTP_OK)
+            end
             for i , v in pairs(ret) do
                 ngx.say(v["n"])
             end
+            ngx.say("---")
 
-            r = col:find({name="dog"}, nil, 5)
-            r:limit(3)
+            r = col:find({name="dog"}, nil, 5, 3)
+            for i , v in r:pairs() do
+                ngx.say(v["n"])
+                break
+            end
             ret,err = r:sort({n=-1})
-            if not ret then ngx.say("sort failed: "..err) 
-                ngx.exit(ngx.HTTP_OK) end
+            if not ret then
+                ngx.say("sort failed: "..err)
+                ngx.exit(ngx.HTTP_OK)
+            end
             for i , v in pairs(ret) do
                 ngx.say(v["n"])
             end
+            for i , v in r:pairs() do
+                ngx.say(v["n"])
+            end
+            ngx.say("---")
 
-            r = col:find({name="dog"}, nil, 3)
-            r:limit(5)
-            ret,err = r:sort({n=1})
-            if not ret then ngx.say("sort failed: "..err) 
-                ngx.exit(ngx.HTTP_OK) end
+            r = col:find({name="dog"}, nil, 5, 3)
+            -- r:limit(3)
+            ret,err = r:sort({n=-1})
+            if not ret then
+                ngx.say("sort failed: "..err)
+                ngx.exit(ngx.HTTP_OK)
+            end
             for i , v in pairs(ret) do
+                ngx.say(v["n"])
+            end
+            for i , v in r:pairs() do
+                ngx.say(v["n"])
+            end
+            ngx.say("---")
+
+            r = col:find({name="dog"}, nil, 3, 5)
+            ret,err = r:sort({n=-1})
+            if not ret then
+                ngx.say("sort failed: "..err)
+                ngx.exit(ngx.HTTP_OK)
+            end
+            for i , v in pairs(ret) do
+                ngx.say(v["n"])
+            end
+            for i , v in r:pairs() do
                 ngx.say(v["n"])
             end
 
@@ -170,12 +205,36 @@ GET /t
 3
 4
 5
+---
+1
+5
+4
+3
+2
+5
+4
+3
+2
+---
+5
+4
 3
 2
 1
-1
-2
+5
+4
 3
+2
+1
+---
+3
+2
+1
+3
+2
+1
+4
+5
 --- no_error_log
 [error]
 
@@ -186,7 +245,7 @@ GET /t
         content_by_lua '
             local mongo = require "resty.mongol"
             conn = mongo:new()
-            conn:set_timeout(10000) 
+            conn:set_timeout(10000)
             local ok, err = conn:connect("127.0.0.1")
 
             if not ok then
@@ -204,7 +263,7 @@ GET /t
             local i, j
             local t = {}
             for i = 1,10 do
-                j = 10 - i
+                j = 11 - i
                 --r, err = col:insert({{name="dog",n=i,m=j}}, nil, true)
                 --if not r then ngx.say("insert failed: "..err) end
                 table.insert(t, {name="dog",n=i,m=j})
@@ -213,25 +272,28 @@ GET /t
             if not r then ngx.say("insert failed: "..err) end
 
             r = col:find({name="dog"}, nil, 5)
-            r:limit(5)
             for k,v in r:pairs() do
                 ngx.say(v["n"])
-                break
+                break -- just call r:next() for one time
             end
 
             local ret,err = r:sort({n=1})
-            if not ret then ngx.say("sort failed: "..err) 
-                ngx.exit(ngx.HTTP_OK) end
+            if not ret then
+                ngx.say("sort failed: "..err)
+                ngx.exit(ngx.HTTP_OK)
+            end
             for i , v in pairs(ret) do
                 ngx.say(v["n"])
             end
-
             for k,v in r:pairs() do
                 ngx.say(v["n"])
             end
+
             local ret,err = r:sort({n=-1})
-            if not ret then ngx.say("sort failed: "..err) 
-                ngx.exit(ngx.HTTP_OK) end
+            if not ret then
+                ngx.say("sort failed: "..err)
+                ngx.exit(ngx.HTTP_OK)
+            end
             for i , v in pairs(ret) do
                 ngx.say(v["n"])
             end
@@ -262,7 +324,7 @@ sort failed: sort must be an array
         content_by_lua '
             local mongo = require "resty.mongol"
             conn = mongo:new()
-            conn:set_timeout(10000) 
+            conn:set_timeout(10000)
             local ok, err = conn:connect("127.0.0.1")
 
             if not ok then
@@ -277,11 +339,10 @@ sort failed: sort must be an array
             r, err = col:delete({}, nil, true)
             if not r then ngx.say("delete failed: "..err) end
 
-            local i, j
+            local i
             local t = {}
             for i = 1,10 do
-                j = 100 - i
-                table.insert(t, {name="dog",n=i,m=j})
+                table.insert(t, {name="dog",n=i})
             end
             r, err = col:insert(t, nil, true)
             if not r then ngx.say("insert failed: "..err) end
@@ -325,6 +386,78 @@ nil
 9
 10
 nil
+--- no_error_log
+[error]
+
+=== TEST 5: find with limit parameter
+--- http_config eval: $::HttpConfig
+--- config
+    location /t {
+        content_by_lua '
+            local mongo = require "resty.mongol"
+            conn = mongo:new()
+            conn:set_timeout(10000)
+            local ok, err = conn:connect("127.0.0.1")
+
+            if not ok then
+                ngx.say("connect failed: "..err)
+            end
+
+            local db = conn:new_db_handle("test")
+            local r = db:auth("admin", "admin")
+            if not r then ngx.say("auth failed") end
+            local col = db:get_col("test")
+
+            r, err = col:delete({}, nil, true)
+            if not r then ngx.say("delete failed: "..err) end
+
+            local t = {}
+            for i = 1,5 do
+                table.insert(t, {name="dog",n=i})
+            end
+            r, err = col:insert(t, nil, true)
+            if not r then ngx.say("insert failed: "..err) end
+
+            r = col:find({name="dog"})
+            for i , v in r:pairs() do
+                ngx.say(v["n"])
+            end
+
+            r = col:find({name="dog"}, nil, 2)
+            for i , v in r:pairs() do
+                ngx.say(v["n"])
+            end
+
+            r = col:find({name="dog"}, nil, 2, 3)
+            for i , v in r:pairs() do
+                ngx.say(v["n"])
+            end
+
+            r = col:find({name="dog"}, nil, 2, 0)
+            for i , v in r:pairs() do
+                ngx.say(v["n"])
+            end
+            conn:close()
+        ';
+    }
+--- request
+GET /t
+--- response_body
+1
+2
+3
+4
+5
+1
+2
+1
+2
+3
+1
+2
+3
+4
+5
 --- no_error_log
 [error]
 

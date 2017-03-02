@@ -137,11 +137,27 @@ Returns a single element array, or nil.
 
  - returnfields is the fields to return, eg: `{n=0}` or `{n=1}`
 
-####cursor = col:find(query, returnfields, num_each_query)
+####cursor = col:find(query, returnfields, num_each_query, limit)
 Returns a cursor object for excuting query.
 
+If you want to iterate all the query result in mongodb, then you NEED to set `limit` to `0` by purpose;
+
+If you want to limit the number of results returned, then set `limit`;
+
+Or else cursor will stop by the number of `num_each_query`.
+
+For example, you want to query for at most 1000 documents in mongodb, and each of query by 200 documents to save memory, and convert ObjectId to string Id for each document. Usage:
+```
+    local result = {}
+    local cursor = col:find({}, {_id=1, name=1}, 200, 1000)
+    for _, item in cursor:pairs() do
+        item._id = util:isTable(item._id) and item._id:tostring() or item._id
+        table.insert(result, item)
+    end
+```
  - returnfields is the fields to return, eg: `{n=0}` or `{n=1}`
- - num_each_query is the max result number for each query of the cursor to avoid fetch a large result in memory, must larger than `1`, `0` for no limit, default to `100`.
+ - num_each_query is the max result number for each query of the cursor to avoid fetch a large result in memory, must larger than `1`, default to `100`.
+ - limit is the max number of results returned; default to `num_each_query`, set to `0` for no limit. If `num_each_query > limit`, limit will be set to num_each_query and you can call cursor:limit() to change limit as you want later.
 
 ####col:getmore(cursorID, [numberToReturn], [offset_i])
  - cursorID is an 8 byte string representing the cursor to getmore on
@@ -164,11 +180,13 @@ A handy wrapper around cursor:next() that works in a generic for loop:
 ####cursor:limit(n)
 Limits the number of results returned.
 
-####result = cursor:sort(field, size)
-Returns an array with size `size` sorted by given field. 
+####result = cursor:sort(field)
+Returns an array with size no bigger than `min(num_each_query, limit)` sorted by given field.
+It just sort the current query results and does not push cursor advance.
+You CAN NOT rely on this to sort all the results returned by find();
+Especially I don't recommand you call cursor:pair() before cursor:sort()
 
- - field is an array by which to sort, and this array size _MUST be 1_. The element in the array has as key the field name, and as value either `1` for ascending sort, or `-1` for descending sort. 
- - num is the temp array size for sorting, default to `10000`.
+ - field is an array by which to sort, and this array size _MUST be 1_. The element in the array has as key the field name, and as value either `1` for ascending sort, or `-1` for descending sort.
 
 ###Object id
 -------------------

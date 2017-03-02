@@ -265,23 +265,40 @@ cat
 
             col = db:get_col("test")
             col:delete({name="puppy"})
-
             for i = 1, 10 do
                 col:insert({{name="puppy"}})
             end
+
             r = col:find({name="puppy"}, nil, 4)
             local j = 0
             for i , v in r:pairs() do
                 j = j +1
             end
-
             ngx.say(j)
+
+            r = col:find({name="puppy"}, nil, 4, 5)
+            local j = 0
+            for i , v in r:pairs() do
+                j = j +1
+            end
+            ngx.say(j)
+
+            r = col:find({name="puppy"}, nil, 4, 0)
+            local j = 0
+            for i , v in r:pairs() do
+                j = j +1
+            end
+            ngx.say(j)
+
+            conn:close()
         ';
     }
 --- request
 GET /t
 --- response_body
 4
+5
+10
 --- no_error_log
 [error]
 

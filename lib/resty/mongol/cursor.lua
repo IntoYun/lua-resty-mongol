@@ -8,7 +8,7 @@ local strformat = string.format
 local cursor_methods = { }
 local cursor_mt = { __index = cursor_methods }
 
-local function new_cursor(col, query, returnfields, num_each_query)
+local function new_cursor(col, query, returnfields, num_each_query, limit)
     return setmetatable ( {
             col = col ;
             query = query ;
@@ -19,7 +19,8 @@ local function new_cursor(col, query, returnfields, num_each_query)
 
             done = false ;
             i = 0;
-            limit_n = 0;
+            localIndex = 0;
+            limit_n = limit;
             num_each = num_each_query;
         } , cursor_mt )
 end
@@ -44,9 +45,7 @@ end
 --todo
 --function cursor_methods:skip(n)
 
-function cursor_methods:sort(field, size)
-    size = size or 10000
-    if size < 2 then return nil, "number of object must > 1" end
+function cursor_methods:sort(field)
     if not field then return nil, "field should not be nil" end
 
     local key, asc, t
@@ -57,8 +56,8 @@ function cursor_methods:sort(field, size)
     end
     if asc ~= 1 and asc ~= -1 then return nil, "order must be 1 or -1" end
 
-    local sort_f = 
-            function(a, b) 
+    local sort_f =
+            function(a, b)
                 if not a and not b then return false end
                 if not a then return true end
                 if not b then return false end
@@ -72,19 +71,18 @@ function cursor_methods:sort(field, size)
                 end
             end
 
-    if #self.results > self.i then
+    local size = self.num_each
+    if #self.results > 0 then
         table.sort(self.results, sort_f)
     elseif #self.results == 0 and self.i == 0 then
-        if self.num_each == 0 and self.limit_n ~= 0 then
-            size = self.limit_n
-        elseif self.num_each ~= 0 and self.limit_n == 0 then
+        if self.limit_n == 0 then
             size = self.num_each
         else
-            size = (self.num_each < self.limit_n 
+            size = (self.num_each < self.limit_n
                         and self.num_each) or self.limit_n
         end
-        
-        self.id, self.results, t = self.col:query(self.query, 
+
+        self.id, self.results, t = self.col:query(self.query,
                         self.returnfields, self.i, size)
         table.sort(self.results, sort_f)
     else
@@ -96,24 +94,26 @@ end
 function cursor_methods:next()
     if self.limit_n > 0 and self.i >= self.limit_n then return nil end
 
-    local v = self.results [ self.i + 1 ]
+    local v = self.results [ self.localIndex + 1 ]
     if v ~= nil then
         self.i = self.i + 1
-        self.results [ self.i ] = nil
+        self.localIndex = self.localIndex + 1
+        self.results [ self.localIndex ] = nil
         return self.i , v
     end
 
     if self.done then return nil end
 
     local t
+    self.localIndex = 0
     if not self.id then
-        self.id, self.results, t = self.col:query(self.query, 
+        self.id, self.results, t = self.col:query(self.query,
                         self.returnfields, self.i, self.num_each)
         if self.id == "\0\0\0\0\0\0\0\0" then
             self.done = true
         end
     else
-        self.id, self.results, t = self.col:getmore(self.id, 
+        self.id, self.results, t = self.col:getmore(self.id,
                         self.num_each, self.i)
         if self.id == "\0\0\0\0\0\0\0\0" then
             self.done = true
