@@ -15,7 +15,7 @@ local num_to_be_uint = ll.num_to_be_uint
 local function _tostring(ob)
     local t = {}
     for i = 1 , 12 do
-        t_insert(t, strformat("%02x", strbyte(ob.id, i, i))) 
+        t_insert(t, strformat("%02x", strbyte(ob.id, i, i)))
     end
     return t_concat(t)
 end
@@ -27,7 +27,7 @@ end
 local function _get_hostname(ob)
     local t = {}
     for i = 5, 7 do
-        t_insert(t, strformat("%02x", strbyte(ob.id, i, i))) 
+        t_insert(t, strformat("%02x", strbyte(ob.id, i, i)))
     end
     return t_concat(t)
 end
@@ -53,7 +53,7 @@ else
 end
 machineid = ngx.md5_bin(machineid):sub(1, 3)
 
-local pid = num_to_le_uint(bit.band(ngx.var.pid, 0xFFFF), 2)
+local pid = num_to_le_uint(bit.band(ngx.worker.pid(), 0xFFFF), 2)
 
 local inc = 0
 local function generate_id ( )
