@@ -15,7 +15,7 @@ local dbmt = require ( mod_name .. ".dbmt" )
 
 function connmethods:ismaster()
     local db = self:new_db_handle("admin")
-    local r, err = db:cmd({ismaster = true}) 
+    local r, err = db:cmd({ismaster = true})
     if not r then
         return nil, err
     end
@@ -35,7 +35,7 @@ function connmethods:getprimary ( searched )
     local r, err = db:cmd({ ismaster = true })
     if not r then
         return nil, "query admin failed: "..err
-    elseif r.ismaster then return self 
+    elseif r.ismaster then return self
     else
         for i , v in ipairs ( r.hosts ) do
             if not searched[v] then
@@ -85,7 +85,8 @@ function connmethods:set_timeout(timeout)
         return nil, "not initialized"
     end
 
-    return sock:settimeout(timeout)
+    sock:settimeout(timeout)
+    return true, "sucucess"
 end
 
 function connmethods:set_keepalive(...)
