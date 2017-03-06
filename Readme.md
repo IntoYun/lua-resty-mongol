@@ -99,6 +99,7 @@ Returns a database object, or nil.
 
 ####ok, err = db:auth(username, password)
 Returns 1 in case of success, or nil with error message.
+Will auto-switch to SCRAM-SHA-1 authenticate mechanism with MongoDB 3.0+
 
 ####col = db:get_col(collection_name)
 Returns a collection object for more operations.

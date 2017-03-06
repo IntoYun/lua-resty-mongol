@@ -19,7 +19,7 @@ function connmethods:ismaster()
     if not r then
         return nil, err
     end
-    return r.ismaster, r.hosts
+    return r.ismaster, r.hosts, r.maxWireVersion
 end
 
 local function parse_host ( str )
