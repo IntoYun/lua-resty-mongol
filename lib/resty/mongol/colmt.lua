@@ -261,15 +261,16 @@ function colmethods:drop()
     return 1
 end
 
-function colmethods:find(query, returnfields, num_each_query, limit)
+function colmethods:find(query, returnfields, num_each_query, limit, offset)
     num_each_query = num_each_query or 100
     limit = limit or num_each_query
+    offset = offset or 0
     if num_each_query <= 1 then
         return nil, "num_each_query must larger than 1"
     elseif limit ~= 0 and num_each_query > limit then
         limit = num_each_query
     end
-    return new_cursor(self, query, returnfields, num_each_query, limit)
+    return new_cursor(self, query, returnfields, num_each_query, limit, offset)
 end
 
 function colmethods:find_one(query, returnfields)

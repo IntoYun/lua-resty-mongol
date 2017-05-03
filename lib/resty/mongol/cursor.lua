@@ -8,7 +8,7 @@ local strformat = string.format
 local cursor_methods = { }
 local cursor_mt = { __index = cursor_methods }
 
-local function new_cursor(col, query, returnfields, num_each_query, limit)
+local function new_cursor(col, query, returnfields, num_each_query, limit, offset)
     return setmetatable ( {
             col = col ;
             query = query ;
@@ -20,6 +20,7 @@ local function new_cursor(col, query, returnfields, num_each_query, limit)
             done = false ;
             i = 0;
             localIndex = 0;
+            offset = offset;
             limit_n = limit;
             num_each = num_each_query;
         } , cursor_mt )
@@ -83,7 +84,7 @@ function cursor_methods:sort(field)
         end
 
         self.id, self.results, t = self.col:query(self.query,
-                        self.returnfields, self.i, size)
+                        self.returnfields, self.offset, size)
         table.sort(self.results, sort_f)
     else
         return nil, "sort must be an array"
@@ -108,7 +109,7 @@ function cursor_methods:next()
     self.localIndex = 0
     if not self.id then
         self.id, self.results, t = self.col:query(self.query,
-                        self.returnfields, self.i, self.num_each)
+                        self.returnfields, self.offset, self.num_each)
         if self.id == "\0\0\0\0\0\0\0\0" then
             self.done = true
         end
