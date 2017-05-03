@@ -114,8 +114,7 @@ function cursor_methods:next()
             self.done = true
         end
     else
-        self.id, self.results, t = self.col:getmore(self.id,
-                        self.num_each, self.i)
+        self.id, self.results, t = self.col:getmore(self.id, self.num_each)
         if self.id == "\0\0\0\0\0\0\0\0" then
             self.done = true
         elseif t.CursorNotFound then

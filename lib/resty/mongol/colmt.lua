@@ -233,12 +233,12 @@ function colmethods:query(query, returnfields, numberToSkip, numberToReturn, opt
     return handle_reply(self.conn, req_id, numberToSkip)
 end
 
-function colmethods:getmore(cursorID, numberToReturn, offset_i)
+function colmethods:getmore(cursorID, numberToReturn)
     local m = "\0\0\0\0" .. full_collection_name(self, self.col)
                 .. num_to_le_int(numberToReturn or 0) .. cursorID
 
     local req_id = docmd(self.conn, "GET_MORE" , m)
-    return handle_reply(self.conn, req_id, offset_i)
+    return handle_reply(self.conn, req_id)
 end
 
 function colmethods:count(query)

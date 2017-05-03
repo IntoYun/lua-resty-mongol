@@ -160,10 +160,9 @@ For example, you want to query for at most 1000 documents in mongodb, each of qu
  - num_each_query is the max result number for each query of the cursor to avoid fetch a large result in memory, must larger than `1`, default to `100`.
  - limit is the max number of results returned; default to `num_each_query`, set to `0` for no limit. If `num_each_query > limit`, limit will be set to num_each_query and you can call cursor:limit() to change limit as you want later.
 
-#### col:getmore(cursorID, [numberToReturn], [offset_i])
+#### col:getmore(cursorID, [numberToReturn])
  - cursorID is an 8 byte string representing the cursor to getmore on
  - numberToReturn is the number of results to return, defaults to -1
- - offset_i is the number to start numbering the returned table from, defaults to 1
 
 #### col:kill_cursors(cursorIDs)
 
