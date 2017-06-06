@@ -125,7 +125,7 @@ local function pack ( k , v )
 
 	if ot == "number" then
 		return "\1" .. k .. "\0" .. to_double ( v )
-	elseif ot == "nil" then
+	elseif ot == "nil" then -- such as {"a", nil, "b", "c"}
 		return "\10" .. k .. "\0"
 	elseif ot == "string" then
 		return "\2" .. k .. "\0" .. num_to_le_uint ( #v + 1 ) .. v .. "\0"
@@ -149,7 +149,7 @@ local function pack ( k , v )
 		else
 			return "\3" .. k .. "\0" .. doc
 		end
-    elseif ot == "userdata" and tostring(v) == "userdata: NULL" then
+    elseif ot == "userdata" and tostring(v) == "userdata: NULL" then -- such as {key: ngx.null}
         return "\10" .. k .. "\0"
 	else
 		error ( "Failure converting " .. ot ..": " .. tostring ( v ) )
