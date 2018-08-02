@@ -46,7 +46,10 @@ local pairs_start = function ( t , sk )
         else
             nk, nv = next(t, k)
         end
-        return nk,nv
+        if nk == sk then
+            nk, nv = next(t, nk)
+        end
+        return nk, nv
     end , t
 end
 
