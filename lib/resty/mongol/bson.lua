@@ -181,7 +181,6 @@ function to_bson(ob)
 	if onlystring then -- Do string first so the case of an empty table is done properly
 		local r = { }
         for k , v in pairs ( ob ) do
---ngx.log(ngx.ERR,"="..k..i)
             t_insert ( r , pack ( k , v ) )
         end
 		m = t_concat ( r )
